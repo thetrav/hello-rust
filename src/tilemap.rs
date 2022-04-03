@@ -87,10 +87,7 @@ fn load_tilemap(
 
     commands.spawn()
         .insert(Name::new("TileMap"))
-        .insert(Transform{
-            translation: Vec3::new(TILE_SIZE/2.0, TILE_SIZE/2.0, 0.0),
-            ..Default::default()
-        })
+        .insert(Transform::default())
         .insert(GlobalTransform::default())
         .push_children(&layers);
 }
