@@ -33,6 +33,7 @@ fn main() {
         .add_plugin(TileMapPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(DebugPlugin)
+        .add_system(bevy::input::system::exit_on_esc_system)
         .run();
 }
 
