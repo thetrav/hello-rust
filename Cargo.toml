@@ -15,6 +15,7 @@ opt-level = 3
 bevy = { version = "0.6.1"}
 bevy-inspector-egui = "0.8"
 tiled = "0.10.1"
+bevy-earcutr = "0.4.1"
 
 [workspace]
 resolver = "2" 

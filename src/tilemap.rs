@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use bevy_inspector_egui::Inspectable;
 use tiled::Loader;
-
+use bevy_earcutr::*;
 
 use crate::{spritesheet::{SpriteSheet, spawn_sprite}, TILE_SIZE};
 
@@ -67,10 +67,20 @@ fn load_tilemap(
                     //TODO: create re-usable functions for coord transforms
                     let x = obj.x / map.tile_width as f32 * TILE_SIZE;
                     let y = 1.0 - obj.y / map.tile_height as f32 * TILE_SIZE;
+                    let vertices = Vec::new();
 
                     match &obj.shape {
                         tiled::ObjectShape::Point(px, py) => {
-                            println!("\tpoint {},{} {},{}", x, y, px, py)
+                            println!("\tpoint {},{} {},{}", x, y, px, py);
+                            vertices.push(x-TILE_SIZE/2);
+                            vertices.push(y-TILE_SIZE/2);
+                            vertices.push(x+TILE_SIZE/2);
+                            vertices.push(y-TILE_SIZE/2);
+                            vertices.push(x+TILE_SIZE/2);
+                            vertices.push(y+TILE_SIZE/2);
+                            
+                            vertices.push(x+TILE_SIZE/2);
+                            vertices.push(y+TILE_SIZE/2);
                         },
                         tiled::ObjectShape::Rect { width, height } => {
                             println!("\trect {},{} {} x {}", x, y, width, height)
@@ -82,16 +92,29 @@ fn load_tilemap(
                             println!("\tpolyLine {},{} \n\t\t{:?}", x, y, points)
                         },
                         tiled::ObjectShape::Polygon { points } => {
-                            println!("\tpolygon {},{} \n\t\t{:?}", x, y, points)
+                            println!("\tpolygon {},{} \n\t\t{:?}", x, y, points);
+                            for (x,y) in points {
+                                vertices.push(x);
+                                vertices.push(y);
+                            }
                         }
                     }
                     //TODO: https://stackoverflow.com/questions/63643682/bevy-how-to-render-triangle-or-polygon-in-2d
                     // convert above shapes to meshes
                     // there isn't any 2d canvas support built into bevy, maybe consider pulling in a library in the mean time
                     // after all, this is just debug stuff
+                    let builder = PolygonMeshBuilder::new();
+
+                    // Call `add_earcutr_input` or each polygon you want in the mesh.
+                    builder.add_earcutr_input(EarcutrInput {
+                        vertices: vec![1,1],
+                        ..Default::default()
+                    });
+
+                    let mesh = builder.build();
 
                     commands.spawn_bundle(MaterialMesh2dBundle {
-                        mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
+                        mesh: meshes.add(mesh).into(),
                         transform: Transform{
                             translation: Vec3::new(x, y, z),
                             ..Default::default()
