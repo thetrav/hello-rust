@@ -149,9 +149,9 @@ fn spawn_player(mut commands: Commands, tile_map: Res<SpriteSheet>) {
         &mut commands, 
         &tile_map, 
         24, 
-        Vec3::new(8.0,-1.0,900.0));
+        Vec3::new(1.0,1.0,900.0));
     
     commands.entity(player)
         .insert(Name::new("Player"))
-        .insert(Player{speed: 3.0, ..Default::default()}).id();
+        .insert(Player{speed: 10.0, ..Default::default()}).id();
 }

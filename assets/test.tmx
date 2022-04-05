@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.8" tiledversion="1.8.4" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="4">
+<map version="1.8" tiledversion="1.8.4" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="5">
  <tileset firstgid="1" source="urban_rpg.tsx"/>
  <layer id="1" name="background" width="50" height="25">
   <data encoding="csv">
@@ -36,10 +36,13 @@
   </object>
  </objectgroup>
  <objectgroup id="7" name="doors">
-  <object id="2" name="redhouse" x="328.014" y="72.6997">
+  <object id="2" name="redhouse" x="327.01" y="72.6997">
    <point/>
   </object>
   <object id="3" name="orangehouse" x="711.419" y="234.543">
+   <point/>
+  </object>
+  <object id="4" name="first tile" x="15" y="15">
    <point/>
   </object>
  </objectgroup>

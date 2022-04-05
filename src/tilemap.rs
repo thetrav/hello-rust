@@ -61,15 +61,18 @@ fn load_tilemap(
                 }
             }
             tiled::LayerType::ObjectLayer(o_layer) => {
-                let pixel_width = map.width as f32 * TILE_SIZE;
-                let pixel_height = map.height as f32 * TILE_SIZE;
+                //pixels per tile = 16
+                let from_pixels = |x:f32, y:f32| {
+                    let tx = (x / map.tile_width as f32) * TILE_SIZE;
+                    let ty = 1.0 - (y / map.tile_height as f32) * TILE_SIZE;
+                    return (tx, ty);
+                };
                 let half_tile = (TILE_SIZE / 2.0) as f64;
                 println!("Object layer {} with {} objects", layer.name, o_layer.objects().len());
                 for obj in o_layer.objects() {
                     println!("\tobj {}: {}", obj.name, obj.obj_type);
                     //TODO: create re-usable functions for coord transforms
-                    let x = obj.x / pixel_width;
-                    let y = (map.height as f32 - obj.y) / pixel_height;
+                    let (x,y) = from_pixels(obj.x, obj.y);
                     let mut vertices:Vec<f64> = Vec::new();
                     match &obj.shape {
                         tiled::ObjectShape::Point(px, py) => {
@@ -98,8 +101,7 @@ fn load_tilemap(
                         tiled::ObjectShape::Polygon { points } => {
                             println!("\tpolygon {},{} \n\t\t{:?}", x, y, points);
                             for p in points {
-                                let x = p.0 / pixel_width;
-                                let y = (map.height as f32 - p.1) / pixel_height;
+                                let (x, y) = from_pixels(p.0, p.1);
                                 vertices.push(x as f64);
                                 vertices.push(y as f64);
                                 println!("added {},{}", x, y);
@@ -120,7 +122,7 @@ fn load_tilemap(
 
                     let mesh = builder.build().unwrap();
                     
-                    commands.spawn_bundle(MaterialMesh2dBundle {
+                    let tile = commands.spawn_bundle(MaterialMesh2dBundle {
                         mesh: meshes.add(mesh).into(),
                         transform: Transform{
                             translation: Vec3::new(x, y, z),
@@ -130,7 +132,8 @@ fn load_tilemap(
                         global_transform: GlobalTransform::default(),
                         visibility: Visibility::default(),
                         computed_visibility: ComputedVisibility::default(),
-                    }).insert(Name::new(obj.name.to_owned()));
+                    }).insert(Name::new(obj.name.to_owned())).id();
+                    tiles.push(tile);
                 }
             }
             tiled::LayerType::ImageLayer(layer) => {
