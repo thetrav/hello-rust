@@ -49,6 +49,12 @@ fn load_tilemap(
         height: map.tile_height as f32
     };
 
+    let map_entity = commands.spawn()
+        .insert(Transform::default())
+        .insert(GlobalTransform::default())
+        .insert(Name::new("assets/text.tmx"))
+        .id();
+
     let layers = load_layers(map.layers(), px, 0.0);
     for layer in layers {
         match layer {
@@ -72,6 +78,7 @@ fn load_tilemap(
                         .id();
                     commands.entity(layer_entity).add_child(named_sprite);
                 }
+                commands.entity(map_entity).add_child(layer_entity);
             },
             LoadedLayer::MeshLayer(name, offset, mesh_params) => {
                 let layer_entity = commands.spawn()
@@ -106,6 +113,7 @@ fn load_tilemap(
                     .id();
                     commands.entity(layer_entity).add_child(mesh_entity);
                 }
+                commands.entity(map_entity).add_child(layer_entity);
             }
         }
     }
