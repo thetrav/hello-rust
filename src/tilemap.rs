@@ -1,23 +1,40 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use bevy_inspector_egui::Inspectable;
-use tiled::Loader;
+use tiled::*;
 use bevy_earcutr::*;
 
 use crate::{spritesheet::{SpriteSheet, spawn_sprite}, TILE_SIZE};
 
 pub struct TileMapPlugin;
 
-#[derive(Component, Inspectable)]
-pub struct TileMapLayer {
-    z:f32,
+#[derive(Debug)]
+enum LoadedLayer {
+    SpriteLayer(String, Vec3, Vec<SpriteParams>),
+    MeshLayer(String, Vec3, Vec<MeshParams>)
+    // GroupLayer(String, Vec3, Vec<LoadedLayer>),
+    // Ignored
 }
 
+#[derive(Debug)]
+struct SpriteParams {
+    name: String, 
+    index: usize, 
+    offset: Vec3
+}
+
+#[derive(Debug, Component, Inspectable)]
+pub struct MeshParams {
+    name: String, 
+    offset: Vec3,
+    vertices: Vec<f64>
+}
 
 impl Plugin for TileMapPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_tilemap);
     }
 }
+
 
 fn load_tilemap(
     mut commands: Commands, 
@@ -27,142 +44,175 @@ fn load_tilemap(
 ) {
     let mut loader = Loader::new();
     let map = loader.load_tmx_map("assets/test.tmx").unwrap();
-    let mut z = 0.0;
-    let mut layers = Vec::new();
-    for layer in map.layers() {
-        z += 100.0;
-        let mut tiles = Vec::new();
-        match layer.layer_type() {
-            tiled::LayerType::TileLayer(layer) => {
-                match layer {
-                    tiled::TileLayer::Finite(data) => {
-                        for y in 0..(data.height()-1) {
-                            for x in 0..(data.width()-1) {
-                                let tx = x as f32 * TILE_SIZE;
-                                let ty = 1.0 - (y as f32 * TILE_SIZE);
-                                data.get_tile(x as i32, y as i32).map(|tile_index| {
-                                    let tile = spawn_sprite(
-                                        &mut commands, 
-                                        &tile_map, 
-                                        tile_index.id().try_into().unwrap(), 
-                                        Vec3::new(tx,ty,z)
-                                    );
-                                    tiles.push(tile)
-                                });
-                            }
-                        }
-                    }
-                    tiled::TileLayer::Infinite(data) => {
-                        println!(
-                            "Infinite tile layer; Tile @ (-5, 0) = {:?}",
-                            data.get_tile(0, 0)
-                        )
-                    }
+    let px = PixelTransformer{
+        width: map.tile_width as f32, 
+        height: map.tile_height as f32
+    };
+
+    let layers = load_layers(map.layers(), px, 0.0);
+    for layer in layers {
+        match layer {
+            LoadedLayer::SpriteLayer(name, offset, sprite_params) => {
+                let layer_entity = commands.spawn()
+                    .insert(Name::new(name))
+                    .insert(Transform{
+                        translation: offset,
+                        ..Default::default()
+                    })
+                    .insert(GlobalTransform::default()).id();
+                for params in sprite_params {
+                    let sprite = spawn_sprite(
+                        &mut commands, 
+                        &tile_map, 
+                        params.index, 
+                        params.offset
+                    );
+                    let named_sprite = commands.entity(sprite)
+                        .insert(Name::new(params.name))
+                        .id();
+                    commands.entity(layer_entity).add_child(named_sprite);
                 }
-            }
-            tiled::LayerType::ObjectLayer(o_layer) => {
-                //pixels per tile = 16
-                let from_pixels = |x:f32, y:f32| {
-                    let tx = (x / map.tile_width as f32) * TILE_SIZE;
-                    let ty = 1.0 - (y / map.tile_height as f32) * TILE_SIZE;
-                    return (tx, ty);
-                };
-                let half_tile = (TILE_SIZE / 2.0) as f64;
-                println!("Object layer {} with {} objects", layer.name, o_layer.objects().len());
-                for obj in o_layer.objects() {
-                    println!("\tobj {}: {}", obj.name, obj.obj_type);
-                    //TODO: create re-usable functions for coord transforms
-                    let (x,y) = from_pixels(obj.x, obj.y);
-                    let mut vertices:Vec<f64> = Vec::new();
-                    match &obj.shape {
-                        tiled::ObjectShape::Point(px, py) => {
-                            println!("\tpoint {},{} {},{}", x, y, px, py);
-                            vertices.push(-half_tile);
-                            vertices.push(-half_tile);
-                            
-                            vertices.push(half_tile);
-                            vertices.push(-half_tile);
-                            
-                            vertices.push(half_tile);
-                            vertices.push(half_tile);
-                            
-                            vertices.push(-half_tile);
-                            vertices.push(half_tile);
-                        },
-                        tiled::ObjectShape::Rect { width, height } => {
-                            println!("\trect {},{} {} x {}", x, y, width, height)
-                        },
-                        tiled::ObjectShape::Ellipse { width, height } => {
-                            println!("\telipse {},{} {} x {}", x, y, width, height)
-                        },
-                        tiled::ObjectShape::Polyline { points } => {
-                            println!("\tpolyLine {},{} \n\t\t{:?}", x, y, points)
-                        },
-                        tiled::ObjectShape::Polygon { points } => {
-                            println!("\tpolygon {},{} \n\t\t{:?}", x, y, points);
-                            for p in points {
-                                let (x, y) = from_pixels(p.0, p.1);
-                                vertices.push(x as f64);
-                                vertices.push(y as f64);
-                                println!("added {},{}", x, y);
-                            }
-                        }
-                    }
-                    //TODO: https://stackoverflow.com/questions/63643682/bevy-how-to-render-triangle-or-polygon-in-2d
-                    // convert above shapes to meshes
-                    // there isn't any 2d canvas support built into bevy, maybe consider pulling in a library in the mean time
-                    // after all, this is just debug stuff
+            },
+            LoadedLayer::MeshLayer(name, offset, mesh_params) => {
+                let layer_entity = commands.spawn()
+                    .insert(Name::new(name))
+                    .insert(Transform{
+                        translation: offset,
+                        ..Default::default()
+                    })
+                    .insert(GlobalTransform::default()).id();
+                for params in mesh_params {
                     let mut builder = PolygonMeshBuilder::new();
 
-                    // Call `add_earcutr_input` or each polygon you want in the mesh.
                     builder.add_earcutr_input(EarcutrInput {
-                        vertices: vertices,
+                        vertices: params.vertices,
                         interior_indices: vec![]
                     });
-
+                
                     let mesh = builder.build().unwrap();
                     
-                    let tile = commands.spawn_bundle(MaterialMesh2dBundle {
+                    let mesh_entity = commands.spawn_bundle(MaterialMesh2dBundle {
                         mesh: meshes.add(mesh).into(),
                         transform: Transform{
-                            translation: Vec3::new(x, y, z),
+                            translation: params.offset,
                             ..Default::default()
                         },
-                        material: materials.add(ColorMaterial::from(Color::GREEN)),
+                        material: materials.add(ColorMaterial::from(bevy::prelude::Color::GREEN)),
                         global_transform: GlobalTransform::default(),
                         visibility: Visibility::default(),
                         computed_visibility: ComputedVisibility::default(),
-                    }).insert(Name::new(obj.name.to_owned())).id();
-                    tiles.push(tile);
+                    })
+                    .insert(Name::new(params.name))
+                    .id();
+                    commands.entity(layer_entity).add_child(mesh_entity);
                 }
             }
-            tiled::LayerType::ImageLayer(layer) => {
-                println!(
-                    "Image layer with {}",
-                    match &layer.image {
-                        Some(img) =>
-                            format!("an image with source = {}", img.source.to_string_lossy()),
-                        None => "no image".to_owned(),
-                    }
-                )
-            }
-            tiled::LayerType::GroupLayer(layer) => {
-                println!("Group layer with {} sublayers", layer.layers().len())
+        }
+    }
+}
+
+fn load_layers<'a>(layers: impl Iterator<Item = Layer<'a>>, px: PixelTransformer, z: f32) -> Vec<LoadedLayer>{
+    let mut loaded_layers = Vec::new();
+    let mut lz = z;
+    for layer in layers {
+        lz += 100.0;
+        let name = layer.name.to_owned();
+        let offset = Vec3::new(layer.offset_x, layer.offset_y, lz);
+        match layer.layer_type() {
+            LayerType::TileLayer(TileLayer::Finite(data)) => {
+                let params = finite_tile_layer(data);
+                loaded_layers.push(LoadedLayer::SpriteLayer(name, offset, params));
+            },
+            LayerType::ObjectLayer(data) => {
+                let params = object_layer(data, px);
+                loaded_layers.push(LoadedLayer::MeshLayer(name, offset, params));
+            },
+            _ => {
+                println!("Unimplemented layer ignored: {}", layer.name);
             }
         }
-        let layer = commands.spawn()
-            .insert(Name::new(layer.name.to_owned()))
-            .insert(Transform::default())
-            .insert(GlobalTransform::default())
-            .insert(TileMapLayer{z})
-            .push_children(&tiles)
-            .id();
-        layers.push(layer);
     }
+    return loaded_layers;
+}
 
-    commands.spawn()
-        .insert(Name::new("TileMap"))
-        .insert(Transform::default())
-        .insert(GlobalTransform::default())
-        .push_children(&layers);
+#[derive(Copy, Clone)]
+struct PixelTransformer {
+    width: f32,
+    height: f32
+}
+
+impl PixelTransformer {
+    fn from_pixels(self: &Self, x:f32, y:f32) -> (f32, f32) {
+        let tx = (x / self.width as f32) * TILE_SIZE;
+        let ty = 1.0 - (y / self.height as f32) * TILE_SIZE;
+        return (tx, ty);
+    }
+}
+
+fn object_layer(data: ObjectLayer, px: PixelTransformer) -> Vec<MeshParams> {
+    let mut meshes = Vec::new();
+    
+    for obj in data.objects() {
+        let (x,y) = &px.from_pixels(obj.x, obj.y);
+        let offset = Vec3::new(*x, *y, 0.0);
+        let name = obj.name.to_owned();
+        let vertices = match &obj.shape {
+            tiled::ObjectShape::Point(_, _) => 
+                rect_mesh(0.0, 0.0, TILE_SIZE, TILE_SIZE),
+            tiled::ObjectShape::Rect { width, height } => 
+                rect_mesh(0.0,0.0, *width, *height),
+            tiled::ObjectShape::Polygon { points } => 
+                poly_mesh(px, points),
+            // tiled::ObjectShape::Ellipse { width, height } => {
+            //     println!("\telipse {},{} {} x {}", x, y, width, height)
+            // },
+            // tiled::ObjectShape::Polyline { points } => {
+            //     println!("\tpolyLine {},{} \n\t\t{:?}", x, y, points)
+            // },
+            _ => vec![]
+        };
+        meshes.push(MeshParams{name, offset, vertices});
+    }
+    return meshes;
+}
+
+fn poly_mesh(px: PixelTransformer, points: &[(f32, f32)]) -> Vec<f64> {
+    let mut vertices = Vec::new();
+    for p in points {
+        let (x, y) = px.from_pixels(p.0, p.1);
+        vertices.push(x as f64);
+        vertices.push(y as f64);
+    }
+    return vertices;
+}
+
+fn rect_mesh(x: f32, y: f32, width: f32, height: f32) -> Vec<f64> {
+    let x = x as f64;
+    let y = y as f64;
+    let w = (width / 2.0) as f64;
+    let h = (height / 2.0) as f64;
+    return vec![
+        x-w, y-h,
+        x+w, y-h,
+        x+w, y+h,
+        x-w, y+h
+    ];
+} 
+
+fn finite_tile_layer(data: FiniteTileLayer) -> Vec<SpriteParams> {
+    let mut tiles = Vec::new();
+    for y in 0..(data.height()-1) {
+        for x in 0..(data.width()-1) {
+            let tx = x as f32 * TILE_SIZE;
+            let ty = 1.0 - (y as f32 * TILE_SIZE);
+            data.get_tile(x as i32, y as i32).map(|tile_index| {
+                tiles.push(SpriteParams{
+                    name: format!("{},{}", x, y),
+                    index: tile_index.id().try_into().unwrap(), 
+                    offset: Vec3::new(tx, ty, 0.0)
+                });
+            });
+        }
+    }
+    return tiles;
 }
