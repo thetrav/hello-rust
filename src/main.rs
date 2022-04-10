@@ -3,7 +3,7 @@ use bevy::{prelude::*, render::camera::ScalingMode};
 
 pub const CLEAR: Color = Color::rgb(0.1,0.1,0.1);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
-pub const TILE_SIZE: f32 = 0.4;
+pub const TILE_SIZE: f32 = 16.0;
 
 mod player;
 mod debug;
@@ -41,11 +41,11 @@ fn main() {
 fn spawn_camera(mut commands: Commands) {
     let mut camera = OrthographicCameraBundle::new_2d();
 
-    camera.orthographic_projection.top = 1.0;
-    camera.orthographic_projection.bottom = -1.0;
+    camera.orthographic_projection.top = 160.0;
+    camera.orthographic_projection.bottom = -160.0;
 
-    camera.orthographic_projection.left = -1.0 * RESOLUTION;
-    camera.orthographic_projection.right = 1.0 * RESOLUTION;
+    camera.orthographic_projection.left = -160.0 * RESOLUTION;
+    camera.orthographic_projection.right = 160.0 * RESOLUTION;
 
     camera.orthographic_projection.scaling_mode = ScalingMode::None;
 

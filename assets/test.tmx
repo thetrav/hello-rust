@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="13">
+<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-up" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="13">
  <tileset firstgid="1" source="urban_rpg.tsx"/>
  <layer id="1" name="background" width="50" height="25">
   <data encoding="csv">
@@ -30,37 +30,6 @@
 29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,110,462,463,464,110,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29
 </data>
  </layer>
- <objectgroup id="6" name="roadpoly">
-  <object id="1" name="road" x="210.31" y="83.0854">
-   <polygon points="0,0 317.629,-0.865473 318.494,174.826 461.297,174.826 461.297,220.696 315.898,220.696 316.763,318.494 270.028,316.763 270.893,221.561 -18.1749,221.561 -16.444,173.96 271.759,173.96 269.162,45.8701 -0.865473,45.0046"/>
-  </object>
- </objectgroup>
- <objectgroup id="7" name="doors">
-  <object id="2" name="redhouse" x="327.01" y="72.6997">
-   <point/>
-  </object>
-  <object id="3" name="orangehouse" x="711.419" y="234.543">
-   <point/>
-  </object>
- </objectgroup>
- <objectgroup id="8" name="test">
-  <object id="7" name="first tile" x="0" y="0">
-   <point/>
-  </object>
-  <object id="8" name="second tile" x="32.0332" y="37.6842">
-   <point/>
-  </object>
-  <object id="9" name="third tile" x="48.0332" y="53.6842">
-   <point/>
-  </object>
-  <object id="10" name="testpoly" x="0" y="0">
-   <polygon points="16,16 63.9789,15.8182 39.6812,48.0635"/>
-  </object>
-  <object id="11" name="testrect" x="63.6364" y="18" width="29.9091" height="29.5455"/>
-  <object id="12" name="testcircle" x="17.2727" y="51.0909" width="30.5455" height="18.9091">
-   <ellipse/>
-  </object>
- </objectgroup>
  <layer id="2" name="cars" width="50" height="25">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -177,4 +146,35 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,109,0,0,0,111,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="6" name="roadpoly">
+  <object id="1" name="road" x="210.31" y="83.0854">
+   <polygon points="0,0 317.629,-0.865473 318.494,174.826 461.297,174.826 461.297,220.696 315.898,220.696 316.763,318.494 270.028,316.763 270.893,221.561 -18.1749,221.561 -16.444,173.96 271.759,173.96 269.162,45.8701 -0.865473,45.0046"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="7" name="doors">
+  <object id="2" name="redhouse" x="327.01" y="72.6997">
+   <point/>
+  </object>
+  <object id="3" name="orangehouse" x="711.419" y="234.543">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="8" name="test">
+  <object id="7" name="first tile" x="0" y="0">
+   <point/>
+  </object>
+  <object id="8" name="second tile" x="32" y="32">
+   <point/>
+  </object>
+  <object id="9" name="third tile" x="48" y="48">
+   <point/>
+  </object>
+  <object id="10" name="testpoly" x="0" y="0">
+   <polygon points="16,16 63.9789,15.8182 39.6812,48.0635"/>
+  </object>
+  <object id="11" name="testrect" x="63.6364" y="18" width="29.9091" height="29.5455"/>
+  <object id="12" name="testcircle" x="17.2727" y="51.0909" width="30.5455" height="18.9091">
+   <ellipse/>
+  </object>
+ </objectgroup>
 </map>

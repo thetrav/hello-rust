@@ -149,7 +149,7 @@ fn spawn_player(mut commands: Commands, tile_map: Res<SpriteSheet>) {
         &mut commands, 
         &tile_map, 
         24, 
-        Vec3::new(1.0,1.0,900.0));
+        Vec3::new(32.0,-32.0,900.0));
     
     commands.entity(player)
         .insert(Name::new("Player"))
