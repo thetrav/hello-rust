@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(clippy::redundant_field_names)]
 use bevy::{prelude::*, render::camera::ScalingMode};
 
